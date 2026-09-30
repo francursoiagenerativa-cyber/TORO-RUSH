@@ -301,7 +301,7 @@ export default function App() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-lg sm:text-2xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 drop-shadow">
+                <span className="text-lg sm:text-2xl font-black tracking-widest text-yellow-300 drop-shadow-[0_0_12px_rgba(253,224,71,0.6)]">
                   TORO RUSH!
                 </span>
               </div>
@@ -365,11 +365,16 @@ export default function App() {
               </span>
             </div>
 
-            {/* Récord */}
+            {/* Récord y Nivel */}
             <div className="flex flex-col items-center">
-              <span className="text-[10px] text-amber-400 tracking-wider font-bold flex items-center gap-1">
-                <Trophy className="w-3.5 h-3.5 text-amber-400" /> RÉCORD
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] text-amber-400 tracking-wider font-bold flex items-center gap-0.5">
+                  <Trophy className="w-3 h-3 text-amber-400" /> RÉCORD
+                </span>
+                <span className="text-[9px] px-1 py-0.2 rounded bg-amber-500/20 text-amber-300 font-extrabold border border-amber-500/30">
+                  NV.{gameState?.level || 1}
+                </span>
+              </div>
               <span className="text-yellow-300 font-black text-base sm:text-lg tracking-wider font-mono">
                 {String(gameState?.highScore || 0).padStart(6, '0')}
               </span>
@@ -538,9 +543,8 @@ export default function App() {
 
                 {/* Paused Overlay */}
                 {gameState?.status === 'PAUSED' && (
-                  <div className="absolute inset-0 bg-slate-950/75 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center space-y-2.5 z-30 select-none">
+                  <div className="absolute inset-0 bg-slate-950/75 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center space-y-3 z-30 select-none">
                     <h3 className="text-xl sm:text-2xl font-black text-amber-400 tracking-widest">EN EL BURLADERO (PAUSA)</h3>
-                    <p className="text-xs text-slate-400">Pulsa P, Espacio o el botón para reanudar</p>
                     <button
                       onClick={() => engineRef.current?.pauseToggle()}
                       className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-5 py-2 rounded-lg text-xs uppercase transition-all"
@@ -581,16 +585,16 @@ export default function App() {
           </div>
         </div>
 
-        {/* Generous Mobile Touchpad Zone (Dedicated comfortable thumb swiping space) */}
+        {/* Generous Mobile Touchpad Zone (Maximizes full vertical space from arena to screen bottom) */}
         <div
-          className={`w-full flex-1 min-h-[80px] sm:min-h-0 flex flex-col items-center justify-center my-1 select-none pointer-events-none ${
+          className={`w-full flex-1 min-h-[60px] flex flex-col items-stretch justify-stretch mt-1 mb-1 select-none pointer-events-none ${
             isFullscreen
               ? 'max-w-[min(99vw,calc((100dvh-70px)*0.84),900px)]'
               : 'max-w-[min(99vw,calc((100dvh-110px)*0.84),840px)]'
           }`}
         >
-          <div className="w-full h-full max-h-[140px] border border-dashed border-amber-500/25 bg-gradient-to-b from-amber-950/20 via-slate-900/40 to-black/60 rounded-xl sm:rounded-2xl flex items-center justify-center p-2 text-center shadow-inner">
-            <span className="text-xs font-bold tracking-widest text-amber-400/80 uppercase">
+          <div className="w-full h-full flex-1 border-2 border-dashed border-amber-500/30 bg-gradient-to-b from-amber-950/25 via-slate-900/40 to-black/70 rounded-xl sm:rounded-2xl flex items-center justify-center p-2 text-center shadow-inner">
+            <span className="text-xs sm:text-sm font-black tracking-widest text-amber-400/90 uppercase">
               ZONA TÁCTIL
             </span>
           </div>

@@ -148,7 +148,45 @@ export class GameEngine {
     };
   }
 
+  private getLevelParameters(level: number) {
+    // 1. Ghost Normal Speed:
+    // Level 1: 1.80 (calm and fair, torero has 2.00)
+    // Level 2: 1.88
+    // Level 3: 1.96
+    // Level 4: 2.02 (slightly faster than torero in long straights!)
+    // Level 5+: caps smoothly at 2.08 to prevent any tile desync
+    const ghostNormalSpeed = Math.min(1.80 + (level - 1) * 0.08, 2.08);
+
+    // 2. Frightened Duration (ticks at 60 fps):
+    // Level 1: 480 ticks (8.0 seconds)
+    // Level 2: 390 ticks (6.5 seconds)
+    // Level 3: 300 ticks (5.0 seconds)
+    // Level 4: 210 ticks (3.5 seconds)
+    // Level 5+: 150 ticks (2.5 seconds)
+    let frightenedDuration = 480;
+    if (level === 2) frightenedDuration = 390;
+    else if (level === 3) frightenedDuration = 300;
+    else if (level === 4) frightenedDuration = 210;
+    else if (level >= 5) frightenedDuration = 150;
+
+    // 3. Frightened ghost speed (calm slowdown during cape effect):
+    const ghostFrightenedSpeed = Math.min(1.15 + (level - 1) * 0.04, 1.35);
+
+    // 4. Scatter and Chase cycle durations:
+    const scatterTicks = Math.max(180, 420 - (level - 1) * 60); // 7s in lvl 1 down to 3s in lvl 5
+    const chaseTicks = Math.min(1380, 1200 + (level - 1) * 45); // 20s up to 23s
+
+    return {
+      ghostNormalSpeed,
+      frightenedDuration,
+      ghostFrightenedSpeed,
+      scatterTicks,
+      chaseTicks,
+    };
+  }
+
   private createGhosts(): Ghost[] {
+    const { ghostNormalSpeed } = this.getLevelParameters(this.state.level);
     return GHOST_CONFIGS.map((cfg) => ({
       id: cfg.id,
       name: cfg.name,
@@ -164,7 +202,7 @@ export class GameEngine {
       direction: cfg.startInHouse ? 'UP' : 'LEFT',
       nextDirection: cfg.startInHouse ? 'UP' : 'LEFT',
       mode: 'SCATTER',
-      speed: SPEED_GHOST_NORMAL,
+      speed: ghostNormalSpeed,
       inHouse: cfg.startInHouse,
       houseTimer: cfg.houseTimer,
       frightenedTimer: 0,
@@ -275,15 +313,16 @@ export class GameEngine {
   }
 
   private updateGlobalTimer(): void {
+    const { scatterTicks, chaseTicks } = this.getLevelParameters(this.state.level);
     if (this.state.globalModeTimer > 0) {
       this.state.globalModeTimer--;
     } else {
       if (this.state.globalMode === 'SCATTER') {
         this.state.globalMode = 'CHASE';
-        this.state.globalModeTimer = 1200; // 20s of chase
+        this.state.globalModeTimer = chaseTicks;
       } else {
         this.state.globalMode = 'SCATTER';
-        this.state.globalModeTimer = 360; // 6s of scatter
+        this.state.globalModeTimer = scatterTicks;
       }
       // Reverse directions on mode change
       this.ghosts.forEach((g) => {
@@ -390,15 +429,14 @@ export class GameEngine {
         }
       }
 
-      // 3. Speed calculation
-      let currentSpeed = SPEED_GHOST_NORMAL;
+      // 3. Speed calculation based on level and mode
+      const { ghostNormalSpeed, ghostFrightenedSpeed } = this.getLevelParameters(this.state.level);
+      let currentSpeed = ghostNormalSpeed;
       if (ghost.mode === 'FRIGHTENED') {
-        currentSpeed = SPEED_GHOST_FRIGHTENED;
+        currentSpeed = ghostFrightenedSpeed;
       } else if (ghost.mode === 'EATEN') {
         currentSpeed = SPEED_GHOST_EATEN;
       }
-      // Slightly faster as level increases
-      currentSpeed += (this.state.level - 1) * 0.12;
 
       // 4. Ghost Target Determination
       this.calculateGhostTarget(ghost);
@@ -607,10 +645,11 @@ export class GameEngine {
         this.state.ghostsEatenChain = 0;
 
         // Trigger Frightened on all non-eaten, active ghosts
+        const { frightenedDuration } = this.getLevelParameters(this.state.level);
         this.ghosts.forEach((ghost) => {
           if (ghost.mode !== 'EATEN' && !ghost.inHouse) {
             ghost.mode = 'FRIGHTENED';
-            ghost.frightenedTimer = FRIGHTENED_DURATION_TICKS;
+            ghost.frightenedTimer = frightenedDuration;
             ghost.direction = this.getOpposite(ghost.direction);
           }
         });

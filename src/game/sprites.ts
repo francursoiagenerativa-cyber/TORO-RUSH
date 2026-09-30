@@ -373,8 +373,8 @@ export class SpriteRenderer {
     const isFrightened = ghost.mode === 'FRIGHTENED';
     const isFlashing =
       isFrightened &&
-      ghost.frightenedTimer < 140 &&
-      Math.floor(ghost.frightenedTimer / 10) % 2 === 0;
+      ghost.frightenedTimer < 110 &&
+      Math.floor(ghost.frightenedTimer / 8) % 2 === 0;
 
     const flipX = ghost.direction === 'LEFT';
 
