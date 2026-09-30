@@ -345,7 +345,7 @@ export default function App() {
       </header>
 
       {/* Main Game Screen */}
-      <main className="w-full flex-1 flex flex-col items-center justify-center p-1 sm:p-2 max-w-6xl overflow-hidden min-h-0">
+      <main className="w-full flex-1 flex flex-col items-center justify-start pt-1 sm:pt-2 px-1 sm:px-2 max-w-6xl overflow-hidden min-h-0">
         {/* Sleek Bullring & Coliseum Arena Container (Dynamic Viewport Scale, No Text) */}
         <div
           ref={arenaRef}
@@ -353,7 +353,7 @@ export default function App() {
             isFullscreen
               ? 'max-w-[min(99vw,calc((100dvh-70px)*0.84),900px)]'
               : 'max-w-[min(99vw,calc((100dvh-110px)*0.84),840px)]'
-          } flex flex-col items-center shadow-2xl transition-all`}
+          } flex flex-col items-center shadow-2xl transition-all shrink-0`}
         >
           {/* Top Scoreboard Bar (Amphitheater Presidential Balcony) */}
           <div className="w-full bg-gradient-to-r from-[#1c0d08] via-[#26120b] to-[#1c0d08] border-2 border-b-0 border-[#7c2d12]/70 rounded-t-xl px-2.5 sm:px-4 py-1 sm:py-1.5 flex items-center justify-between text-xs sm:text-sm shadow-md">
@@ -436,7 +436,7 @@ export default function App() {
                       className={`w-full h-auto ${
                         isFullscreen
                           ? 'max-h-[calc(100dvh-75px)]'
-                          : 'max-h-[calc(100dvh-115px)]'
+                          : 'max-h-[min(54vh,calc(100dvh-170px))] sm:max-h-[calc(100dvh-115px)]'
                       } block select-none touch-none aspect-[21/25]`}
                       style={{ touchAction: 'none' }}
                     />
@@ -562,12 +562,12 @@ export default function App() {
             isFullscreen
               ? 'max-w-[min(99vw,calc((100dvh-70px)*0.84),900px)]'
               : 'max-w-[min(99vw,calc((100dvh-110px)*0.84),840px)]'
-          } mt-1 sm:mt-1.5 flex items-center justify-between px-2.5 sm:px-3 py-1 bg-gradient-to-r from-slate-900/90 via-slate-900/95 to-slate-900/90 border border-red-900/50 rounded-lg sm:rounded-xl shadow text-[11px] sm:text-xs`}
+          } mt-1 sm:mt-1.5 flex items-center justify-between px-2.5 sm:px-3 py-1 bg-gradient-to-r from-slate-900/90 via-slate-900/95 to-slate-900/90 border border-red-900/50 rounded-lg sm:rounded-xl shadow text-[11px] sm:text-xs shrink-0`}
         >
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             <span className="text-base select-none shrink-0">👆</span>
             <span className="text-slate-300 font-medium truncate">
-              Desliza para torear
+              Desliza en cualquier lugar para torear
             </span>
           </div>
 
@@ -578,6 +578,21 @@ export default function App() {
             >
               {gameState?.status === 'PAUSED' ? 'Reanudar' : 'Pausa'}
             </button>
+          </div>
+        </div>
+
+        {/* Generous Mobile Touchpad Zone (Dedicated comfortable thumb swiping space) */}
+        <div
+          className={`w-full flex-1 min-h-[80px] sm:min-h-0 flex flex-col items-center justify-center my-1 select-none pointer-events-none ${
+            isFullscreen
+              ? 'max-w-[min(99vw,calc((100dvh-70px)*0.84),900px)]'
+              : 'max-w-[min(99vw,calc((100dvh-110px)*0.84),840px)]'
+          }`}
+        >
+          <div className="w-full h-full max-h-[140px] border border-dashed border-amber-500/25 bg-gradient-to-b from-amber-950/20 via-slate-900/40 to-black/60 rounded-xl sm:rounded-2xl flex items-center justify-center p-2 text-center shadow-inner">
+            <span className="text-xs font-bold tracking-widest text-amber-400/80 uppercase">
+              ZONA TÁCTIL
+            </span>
           </div>
         </div>
       </main>
