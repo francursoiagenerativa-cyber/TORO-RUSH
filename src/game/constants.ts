@@ -1,56 +1,40 @@
-export const TILE_SIZE = 16;
-export const COLS = 35;
-export const ROWS = 41;
+export const TILE_SIZE = 28;
+export const COLS = 21;
+export const ROWS = 25;
 
-export const CANVAS_WIDTH = COLS * TILE_SIZE; // 560
-export const CANVAS_HEIGHT = ROWS * TILE_SIZE; // 656
+export const CANVAS_WIDTH = COLS * TILE_SIZE; // 588
+export const CANVAS_HEIGHT = ROWS * TILE_SIZE; // 700
 
 export const TUNNEL_ROWS: number[] = [];
 
-// Complicated, extensive 35x41 labyrinth with red burladeros,
-// 100% enclosed perimeter with zero exits, and 555 yellow coins.
+// Perfectly balanced, less extensive 21x25 arcade bullring
+// 100% enclosed perimeter with zero exits, spacious corridors, and 237 yellow coins.
 export const INITIAL_MAP: string[] = [
-  'WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW', // 0
-  'W................W................W', // 1
-  'W.WWWW.WWWWW.WWW.W.WWW.WWWWW.WWWW.W', // 2
-  'WoWWWW.WWWWW.WWW.W.WWW.WWWWW.WWWWoW', // 3 - power pellets
-  'W.WWWW.WWWWW.WWW.W.WWW.WWWWW.WWWW.W', // 4
-  'W................W................W', // 5
-  'W.WWWW.WW.WWWWWW.W.WWWWWW.WW.WWWW.W', // 6
-  'W.WWWW.WW.WWWWWW.W.WWWWWW.WW.WWWW.W', // 7
-  'W......WW....WWW.W.WWW....WW......W', // 8
-  'WWWWWW.WWWWW.WWW.W.WWW.WWWWW.WWWWWW', // 9
-  'WWWWWW.WWWWW.WW..W..WW.WWWWW.WWWWWW', // 10 (Sealed with burladero wall)
-  'WWWWWW.WW........W........WW.WWWWWW', // 11
-  'W......WW.WWWWWW.W.WWWWWW.WW......W', // 12
-  'W.WWWW.WW.WWWWWW.W.WWWWWW.WW.WWWW.W', // 13
-  'W.WWWW.WW........ ........WW.WWWW.W', // 14
-  'W.WWWW.WWWW.WW=======WW.WWWW.WWWW.W', // 15 (Toril Door ==)
-  'W.WWWW.WWWW.W---------W.WWWW.WWWW.W', // 16
-  'W...........W---------W...........W', // 17
-  'W.WWWW.WWWW.W---------W.WWWW.WWWW.W', // 18
-  'W.WWWW.WWWW.WWWWWWWWWWW.WWWW.WWWW.W', // 19 (Toril Enclosure)
-  'W......WW........W........WW......W', // 20
-  'WWWWWW.WW.WWWWWW.W.WWWWWW.WW.WWWWWW', // 21
-  'WWWWWW.WW.WWWWWW.W.WWWWWW.WW.WWWWWW', // 22 (Sealed)
-  'WWWWWW.WW........W........WW.WWWWWW', // 23 (Sealed)
-  'WWWWWW.WW.WWWWWW.W.WWWWWW.WW.WWWWWW', // 24
-  'W................W................W', // 25
-  'W.WWWW.WWWWWW.WW.W.WW.WWWWWW.WWWW.W', // 26
-  'W.WWWW.WWWWWW.WW.W.WW.WWWWWW.WWWW.W', // 27
-  'Wo..WW....WW.....W.....WW....WW..oW', // 28 - power pellets
-  'WWW.WW.WW.WW.WWW.W.WWW.WW.WW.WW.WWW', // 29
-  'WWWWWW.WW.WW.  . . .  .WW.WW.WWWWWW', // 30 (Sealed with burladero wall)
-  'WWWWWW.WW.WW.WWW.W.WWW.WW.WW.WWWWWW', // 31
-  'W......WW....WW..W..WW....WW......W', // 32
-  'W.WWWWWWWWWW.WW.WWW.WW.WWWWWWWWWW.W', // 33
-  'W.WWWWWWWWWW.WW.WWW.WW.WWWWWWWWWW.W', // 34
-  'W................W................W', // 35
-  'W.WWWW.WWWWWWWW..W..WWWWWWWW.WWWW.W', // 36
-  'W.WWWW.WWWWWWWW..W..WWWWWWWW.WWWW.W', // 37
-  'W...WW...........W...........WW...W', // 38
-  'W................W................W', // 39
-  'WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW', // 40
+  'WWWWWWWWWWWWWWWWWWWWW', // 0
+  'W.........W.........W', // 1
+  'WoWW.WWWW.W.WWWW.WWoW', // 2 - power pellets
+  'W.WW.WWWW.W.WWWW.WW.W', // 3
+  'W...................W', // 4
+  'W.WW.W.WWWWWWW.W.WW.W', // 5
+  'W....W....W....W....W', // 6
+  'WWWW.WWWW.W.WWWW.WWWW', // 7
+  'WWWW.W.........W.WWWW', // 8
+  'WWWW.W.WW===WW.W.WWWW', // 9 - Toril Door (col 9..11, row 9)
+  'W......W-----W......W', // 10
+  'W.WWWW.W-----W.WWWW.W', // 11
+  'W.WWWW.WWWWWWW.WWWW.W', // 12
+  'W....W.........W....W', // 13 - Bonus Item at (10, 13)
+  'WWWW.W.WWWWWWW.W.WWWW', // 14
+  'WWWW.W.WWWWWWW.W.WWWW', // 15
+  'W.........W.........W', // 16 - Torero Spawn at (10, 16)
+  'W.WW.WWWW.W.WWWW.WW.W', // 17
+  'Wo.W.W.........W.W.oW', // 18 - power pellets
+  'WW.W.W.WWWWWWW.W.W.WW', // 19
+  'W....W....W....W....W', // 20
+  'W.WWWWWWW.W.WWWWWWW.W', // 21
+  'W.........W.........W', // 22
+  'W...................W', // 23
+  'WWWWWWWWWWWWWWWWWWWWW', // 24
 ];
 
 export const GHOST_CONFIGS = [
@@ -60,10 +44,10 @@ export const GHOST_CONFIGS = [
     alias: 'El Rojo',
     color: '#ef4444', // Red
     scaredColor: '#3b82f6',
-    scatterCol: 33,
+    scatterCol: 19,
     scatterRow: 0,
-    spawnCol: 17,
-    spawnRow: 14,
+    spawnCol: 10,
+    spawnRow: 8,
     startInHouse: false,
     houseTimer: 0,
   },
@@ -75,10 +59,10 @@ export const GHOST_CONFIGS = [
     scaredColor: '#3b82f6',
     scatterCol: 1,
     scatterRow: 0,
-    spawnCol: 17,
-    spawnRow: 17,
+    spawnCol: 10,
+    spawnRow: 11,
     startInHouse: true,
-    houseTimer: 80,
+    houseTimer: 60,
   },
   {
     id: 'inky' as const,
@@ -86,12 +70,12 @@ export const GHOST_CONFIGS = [
     alias: 'El Cian',
     color: '#06b6d4', // Cyan
     scaredColor: '#3b82f6',
-    scatterCol: 33,
-    scatterRow: 40,
-    spawnCol: 15,
-    spawnRow: 17,
+    scatterCol: 19,
+    scatterRow: 24,
+    spawnCol: 9,
+    spawnRow: 11,
     startInHouse: true,
-    houseTimer: 200,
+    houseTimer: 160,
   },
   {
     id: 'clyde' as const,
@@ -100,11 +84,11 @@ export const GHOST_CONFIGS = [
     color: '#f97316', // Orange
     scaredColor: '#3b82f6',
     scatterCol: 1,
-    scatterRow: 40,
-    spawnCol: 19,
-    spawnRow: 17,
+    scatterRow: 24,
+    spawnCol: 11,
+    spawnRow: 11,
     startInHouse: true,
-    houseTimer: 350,
+    houseTimer: 270,
   },
   {
     id: 'morlaco' as const,
@@ -112,21 +96,31 @@ export const GHOST_CONFIGS = [
     alias: 'El Quinto Malo',
     color: '#a855f7', // Majestic Purple / Capote de Paseo
     scaredColor: '#3b82f6',
-    scatterCol: 33,
+    scatterCol: 19,
     scatterRow: 1,
-    spawnCol: 17,
-    spawnRow: 18,
+    spawnCol: 10,
+    spawnRow: 10,
     startInHouse: true,
-    houseTimer: 460,
+    houseTimer: 360,
   },
 ];
 
 export const TORERO_SPAWN = {
-  col: 17,
-  row: 25,
+  col: 10,
+  row: 16,
 };
 
-export const SPEED_BASE = 2.0; // pixels per tick at 60fps
+export const TORIL_DOOR = {
+  col: 10,
+  row: 8, // Walkable tile directly outside the gate
+};
+
+export const BONUS_SPAWN = {
+  col: 10,
+  row: 13,
+};
+
+export const SPEED_BASE = 2.0; // Velocidad original preferida por el usuario
 export const SPEED_GHOST_NORMAL = 1.85;
 export const SPEED_GHOST_FRIGHTENED = 1.15;
 export const SPEED_GHOST_EATEN = 4.0;

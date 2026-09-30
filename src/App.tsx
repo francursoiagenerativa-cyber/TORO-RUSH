@@ -14,6 +14,8 @@ import {
   ArrowRight,
   Info,
   CircleDot,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react';
 import { GameEngine, GameEngineState } from './game/engine';
 import { SpriteRenderer } from './game/sprites';
@@ -34,6 +36,42 @@ export default function App() {
   const [crtEffect, setCrtEffect] = useState(false); // Default to crystal clear (sharp) display
   const [showGuide, setShowGuide] = useState(false);
   const [swipeFeedback, setSwipeFeedback] = useState<Direction | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const toggleFullscreen = useCallback(async () => {
+    try {
+      const doc = document as any;
+      const docEl = document.documentElement as any;
+      if (!doc.fullscreenElement && !doc.webkitFullscreenElement) {
+        if (docEl.requestFullscreen) {
+          await docEl.requestFullscreen();
+        } else if (docEl.webkitRequestFullscreen) {
+          docEl.webkitRequestFullscreen();
+        }
+      } else {
+        if (doc.exitFullscreen) {
+          await doc.exitFullscreen();
+        } else if (doc.webkitExitFullscreen) {
+          doc.webkitExitFullscreen();
+        }
+      }
+    } catch (err) {
+      console.warn('Fullscreen error:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const doc = document as any;
+      setIsFullscreen(!!(doc.fullscreenElement || doc.webkitFullscreenElement));
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+    };
+  }, []);
 
   const swipeFeedbackTimer = useRef<number | null>(null);
   const touchStartPos = useRef<{ x: number; y: number } | null>(null);
@@ -61,35 +99,46 @@ export default function App() {
       }
     }
 
-    // Main animation loop
-    let lastTime = 0;
-    const loop = (time: number) => {
-      if (time - lastTime >= 1000 / 60) {
-        lastTime = time;
+    // High-performance fixed-timestep animation loop (Zero slow-motion on mobile & 120Hz screens)
+    let lastTime = performance.now();
+    let accumulator = 0;
+    const STEP = 1000 / 60; // 16.667ms fixed physics tick
+
+    const loop = (currentTime: number) => {
+      let delta = currentTime - lastTime;
+      if (delta > 200) delta = 200; // Cap large lags to avoid death spiral
+      lastTime = currentTime;
+      accumulator += delta;
+
+      // Update physics at fixed 60 ticks/sec regardless of display refresh rate
+      while (accumulator >= STEP) {
         if (engineRef.current) {
           engineRef.current.update();
         }
-
-        if (canvasRef.current && rendererRef.current && engineRef.current) {
-          const eng = engineRef.current;
-          const ren = rendererRef.current;
-          const tick = eng.state.tick;
-
-          // Draw all game elements with strict arena canvas clipping
-          ren.ctx.save();
-          ren.ctx.beginPath();
-          ren.ctx.rect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-          ren.ctx.clip();
-
-          ren.drawMap(eng.grid, tick);
-          ren.drawBonus(eng.bonus);
-          ren.drawTorero(eng.torero, tick);
-          eng.ghosts.forEach((ghost) => ren.drawGhost(ghost, tick));
-          ren.drawPopups(eng.popups);
-
-          ren.ctx.restore();
-        }
+        accumulator -= STEP;
       }
+
+      // Render on every screen refresh
+      if (canvasRef.current && rendererRef.current && engineRef.current) {
+        const eng = engineRef.current;
+        const ren = rendererRef.current;
+        const tick = eng.state.tick;
+
+        // Draw all game elements with strict arena canvas clipping
+        ren.ctx.save();
+        ren.ctx.beginPath();
+        ren.ctx.rect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        ren.ctx.clip();
+
+        ren.drawMap(eng.grid, tick);
+        ren.drawBonus(eng.bonus);
+        ren.drawTorero(eng.torero, tick);
+        eng.ghosts.forEach((ghost) => ren.drawGhost(ghost, tick));
+        ren.drawPopups(eng.popups);
+
+        ren.ctx.restore();
+      }
+
       animFrameId.current = requestAnimationFrame(loop);
     };
 
@@ -133,6 +182,11 @@ export default function App() {
         case 'p':
         case 'P':
           engineRef.current.pauseToggle();
+          e.preventDefault();
+          return;
+        case 'f':
+        case 'F':
+          toggleFullscreen();
           e.preventDefault();
           return;
       }
@@ -244,25 +298,27 @@ export default function App() {
   return (
     <div className="min-h-screen h-[100dvh] bg-slate-950 text-slate-100 flex flex-col items-center justify-between font-mono selection:bg-amber-400 selection:text-black overflow-hidden">
       {/* Top Arcade Header */}
-      <header className="w-full bg-gradient-to-r from-red-950 via-slate-950 to-red-950 border-b border-red-900/60 px-4 py-2 sm:py-2.5 shadow-lg shrink-0">
-        <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
+      <header className={`w-full bg-gradient-to-r from-red-950 via-slate-950 to-red-950 border-b border-red-900/60 shadow-lg shrink-0 transition-all ${
+        isFullscreen ? 'px-3 py-1' : 'px-3 sm:px-4 py-1.5 sm:py-2'
+      }`}>
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-2 sm:gap-3">
+          <div className="flex items-center gap-2">
             {/* Emojis from attachments */}
-            <div className="flex items-center gap-1 bg-slate-900/80 px-2 py-1 rounded-xl border border-red-900/60">
+            <div className="flex items-center gap-1 bg-slate-900/80 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-lg sm:rounded-xl border border-red-900/60">
               <img
                 src={toreroImg}
                 alt="Torero Emoji"
-                className="w-8 h-8 object-contain drop-shadow-md"
+                className="w-6 h-6 sm:w-8 sm:h-8 object-contain drop-shadow-md"
               />
               <img
                 src={bullImg}
                 alt="Toro Emoji"
-                className="w-8 h-8 object-contain drop-shadow-md"
+                className="w-6 h-6 sm:w-8 sm:h-8 object-contain drop-shadow-md"
               />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xl sm:text-2xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 drop-shadow">
+                <span className="text-lg sm:text-2xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 drop-shadow">
                   TORO RUSH!
                 </span>
               </div>
@@ -270,7 +326,20 @@ export default function App() {
           </div>
 
           {/* Quick Toolbar */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="flex items-center gap-1 sm:gap-1.5">
+            <button
+              onClick={toggleFullscreen}
+              title={isFullscreen ? 'Salir de Pantalla Completa (F)' : 'Pantalla Completa (F)'}
+              className={`p-1.5 sm:px-2.5 sm:py-1 rounded-md text-xs flex items-center gap-1 border transition-colors ${
+                isFullscreen
+                  ? 'bg-amber-400 text-slate-950 border-amber-300 font-bold shadow-[0_0_12px_rgba(251,191,36,0.6)]'
+                  : 'bg-slate-900 border-slate-800 hover:border-amber-400 text-slate-300 hover:text-white'
+              }`}
+            >
+              {isFullscreen ? <Minimize2 className="w-3.5 h-3.5 text-slate-950" /> : <Maximize2 className="w-3.5 h-3.5" />}
+              <span className="hidden md:inline">{isFullscreen ? 'Ventana' : 'Pantalla Completa'}</span>
+            </button>
+
             <button
               onClick={() => setCrtEffect(!crtEffect)}
               title="Efecto Pantalla CRT Recreativa"
@@ -319,11 +388,18 @@ export default function App() {
       </header>
 
       {/* Main Game Screen */}
-      <main className="w-full flex-1 flex flex-col items-center justify-center p-2 sm:p-3 max-w-4xl overflow-y-auto">
+      <main className="w-full flex-1 flex flex-col items-center justify-center p-1 sm:p-2 max-w-6xl overflow-hidden min-h-0">
         {/* Sleek Bullring & Coliseum Arena Container (Dynamic Viewport Scale, No Text) */}
-        <div className="w-full max-w-[min(96vw,calc((100dvh-170px)*0.854),590px)] flex flex-col items-center shadow-2xl transition-all">
+        <div
+          ref={arenaRef}
+          className={`w-full ${
+            isFullscreen
+              ? 'max-w-[min(99vw,calc((100dvh-70px)*0.84),900px)]'
+              : 'max-w-[min(99vw,calc((100dvh-110px)*0.84),840px)]'
+          } flex flex-col items-center shadow-2xl transition-all`}
+        >
           {/* Top Scoreboard Bar (Amphitheater Presidential Balcony) */}
-          <div className="w-full bg-gradient-to-r from-[#1c0d08] via-[#26120b] to-[#1c0d08] border-2 border-b-0 border-[#7c2d12]/70 rounded-t-xl px-3 sm:px-4 py-1.5 flex items-center justify-between text-xs sm:text-sm shadow-md">
+          <div className="w-full bg-gradient-to-r from-[#1c0d08] via-[#26120b] to-[#1c0d08] border-2 border-b-0 border-[#7c2d12]/70 rounded-t-xl px-2.5 sm:px-4 py-1 sm:py-1.5 flex items-center justify-between text-xs sm:text-sm shadow-md">
             {/* 1UP Score */}
             <div className="flex flex-col">
               <span className="text-[10px] text-rose-400 font-bold tracking-wider">1UP FAENA</span>
@@ -402,7 +478,11 @@ export default function App() {
                       ref={canvasRef}
                       width={CANVAS_WIDTH}
                       height={CANVAS_HEIGHT}
-                      className="w-full h-auto max-h-[calc(100dvh-175px)] block select-none touch-none aspect-[35/41]"
+                      className={`w-full h-auto ${
+                        isFullscreen
+                          ? 'max-h-[calc(100dvh-75px)]'
+                          : 'max-h-[calc(100dvh-115px)]'
+                      } block select-none touch-none aspect-[21/25]`}
                       style={{ touchAction: 'none' }}
                     />
 
@@ -440,7 +520,7 @@ export default function App() {
                         ¡A POR ELLOS, MAESTRO!
                       </h2>
                       <p className="text-[11px] sm:text-xs text-slate-300 mt-0.5">
-                        Laberinto de burladeros con <strong>555 monedas de oro</strong>.
+                        Laberinto de burladeros con <strong>237 monedas de oro</strong>.
                       </p>
                     </div>
 
@@ -534,7 +614,13 @@ export default function App() {
         </div>
 
         {/* Sleek Mobile & Desktop Control Bar (Zero Scroll) */}
-        <div className="w-full max-w-[min(96vw,calc((100dvh-170px)*0.854),590px)] mt-2 flex items-center justify-between px-3 py-1.5 bg-gradient-to-r from-slate-900/90 via-slate-900/95 to-slate-900/90 border border-red-900/50 rounded-xl shadow text-xs">
+        <div
+          className={`w-full ${
+            isFullscreen
+              ? 'max-w-[min(99vw,calc((100dvh-70px)*0.84),900px)]'
+              : 'max-w-[min(99vw,calc((100dvh-110px)*0.84),840px)]'
+          } mt-1 sm:mt-1.5 flex items-center justify-between px-2.5 sm:px-3 py-1 bg-gradient-to-r from-slate-900/90 via-slate-900/95 to-slate-900/90 border border-red-900/50 rounded-lg sm:rounded-xl shadow text-[11px] sm:text-xs`}
+        >
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             <span className="text-base select-none shrink-0">👆</span>
             <span className="text-slate-300 font-medium truncate">

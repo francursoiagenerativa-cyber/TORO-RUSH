@@ -20,6 +20,8 @@ import {
   SPEED_GHOST_EATEN,
   FRIGHTENED_DURATION_TICKS,
   BONUS_ITEMS,
+  TORIL_DOOR,
+  BONUS_SPAWN,
 } from './constants';
 import { soundFX } from './audio';
 
@@ -80,8 +82,8 @@ export class GameEngine {
     this.torero = this.createTorero();
     this.ghosts = this.createGhosts();
     this.bonus = {
-      col: 17,
-      row: 23,
+      col: BONUS_SPAWN.col,
+      row: BONUS_SPAWN.row,
       name: BONUS_ITEMS[0].name,
       points: BONUS_ITEMS[0].points,
       icon: BONUS_ITEMS[0].icon,
@@ -306,9 +308,9 @@ export class GameEngine {
         if (ghost.houseTimer > 0) {
           ghost.houseTimer--;
           // Bob up and down inside pen
-          if (ghost.direction === 'UP' && ghost.y <= 16.5 * TILE_SIZE) {
+          if (ghost.direction === 'UP' && ghost.y <= 10.5 * TILE_SIZE) {
             ghost.direction = 'DOWN';
-          } else if (ghost.direction === 'DOWN' && ghost.y >= 17.5 * TILE_SIZE) {
+          } else if (ghost.direction === 'DOWN' && ghost.y >= 11.5 * TILE_SIZE) {
             ghost.direction = 'UP';
           }
           const v = this.getVector(ghost.direction);
@@ -316,9 +318,9 @@ export class GameEngine {
           return;
         }
 
-        // Leave house: move toward door center (col 17, row 14)
-        const doorX = 17 * TILE_SIZE + TILE_SIZE / 2;
-        const doorY = 14 * TILE_SIZE + TILE_SIZE / 2;
+        // Leave house: move toward door center
+        const doorX = TORIL_DOOR.col * TILE_SIZE + TILE_SIZE / 2;
+        const doorY = TORIL_DOOR.row * TILE_SIZE + TILE_SIZE / 2;
 
         if (Math.abs(ghost.x - doorX) > 1.5) {
           ghost.x += ghost.x < doorX ? 1.2 : -1.2;
@@ -428,7 +430,7 @@ export class GameEngine {
       if (ghost.y > (ROWS - 1.5) * TILE_SIZE) ghost.y = (ROWS - 1.5) * TILE_SIZE;
 
       // Check if EATEN ghost arrived home at the toril door
-      if (ghost.mode === 'EATEN' && curRow === 14 && Math.abs(curCol - 17) <= 1) {
+      if (ghost.mode === 'EATEN' && curRow === TORIL_DOOR.row && Math.abs(curCol - TORIL_DOOR.col) <= 1) {
         ghost.mode = this.state.globalMode;
         ghost.frightenedTimer = 0;
       }
@@ -437,8 +439,8 @@ export class GameEngine {
 
   private calculateGhostTarget(ghost: Ghost): void {
     if (ghost.mode === 'EATEN') {
-      ghost.targetCol = 17;
-      ghost.targetRow = 14;
+      ghost.targetCol = TORIL_DOOR.col;
+      ghost.targetRow = TORIL_DOOR.row;
       return;
     }
 
