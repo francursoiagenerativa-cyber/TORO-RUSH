@@ -92,12 +92,55 @@ export class GameEngine {
     };
   }
 
-  private createTorero(): Torero {
+  private getRandomSafeSpawn(): { col: number; row: number } {
+    const candidates: { col: number; row: number }[] = [];
+    const minDistanceTiles = 6;
+
+    for (let r = 1; r < ROWS - 1; r++) {
+      for (let c = 1; c < COLS - 1; c++) {
+        // Must not be wall, door, or inside the bull house
+        if (!this.isPassable(c, r, false)) continue;
+        if (this.grid[r][c] === '-' || this.grid[r][c] === '=') continue;
+
+        // Keep safe distance from bull pen center and gate (col 10, row 9)
+        const distToGate = Math.hypot(c - 10, r - 9);
+        if (distToGate < minDistanceTiles) continue;
+
+        // Keep safe distance from Blinky's spawn (col 10, row 8)
+        const distToBlinky = Math.hypot(c - 10, r - 8);
+        if (distToBlinky < minDistanceTiles) continue;
+
+        candidates.push({ col: c, row: r });
+      }
+    }
+
+    if (candidates.length > 0) {
+      const idx = Math.floor(Math.random() * candidates.length);
+      return candidates[idx];
+    }
+
+    return TORERO_SPAWN;
+  }
+
+  private createTorero(spawnPos?: { col: number; row: number }): Torero {
+    const spawn = spawnPos || TORERO_SPAWN;
+
+    // Pick an initial passable direction
+    let initialDir: Direction = 'LEFT';
+    const directions: Direction[] = ['LEFT', 'RIGHT', 'UP', 'DOWN'];
+    for (const d of directions) {
+      const nextTile = this.getTileInDir(spawn.col, spawn.row, d);
+      if (this.isPassable(nextTile.col, nextTile.row, false)) {
+        initialDir = d;
+        break;
+      }
+    }
+
     return {
-      x: TORERO_SPAWN.col * TILE_SIZE,
-      y: TORERO_SPAWN.row * TILE_SIZE + TILE_SIZE / 2,
-      direction: 'LEFT',
-      nextDirection: 'LEFT',
+      x: spawn.col * TILE_SIZE + TILE_SIZE / 2,
+      y: spawn.row * TILE_SIZE + TILE_SIZE / 2,
+      direction: initialDir,
+      nextDirection: initialDir,
       speed: SPEED_BASE,
       mouthFrame: 0,
       isDead: false,
@@ -632,7 +675,8 @@ export class GameEngine {
   }
 
   private resetPositionsAfterDeath(): void {
-    this.torero = this.createTorero();
+    const safeSpawn = this.getRandomSafeSpawn();
+    this.torero = this.createTorero(safeSpawn);
     this.ghosts = this.createGhosts();
     this.state.globalMode = 'SCATTER';
     this.state.globalModeTimer = 300;

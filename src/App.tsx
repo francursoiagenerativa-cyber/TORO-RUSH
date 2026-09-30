@@ -7,12 +7,6 @@ import {
   RotateCcw,
   Sparkles,
   Trophy,
-  Tv,
-  ArrowUp,
-  ArrowDown,
-  ArrowLeft,
-  ArrowRight,
-  Info,
   CircleDot,
   Maximize2,
   Minimize2,
@@ -33,9 +27,6 @@ export default function App() {
 
   const [gameState, setGameState] = useState<GameEngineState | null>(null);
   const [muted, setMuted] = useState(false);
-  const [crtEffect, setCrtEffect] = useState(false); // Default to crystal clear (sharp) display
-  const [showGuide, setShowGuide] = useState(false);
-  const [swipeFeedback, setSwipeFeedback] = useState<Direction | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const toggleFullscreen = useCallback(async () => {
@@ -73,7 +64,6 @@ export default function App() {
     };
   }, []);
 
-  const swipeFeedbackTimer = useRef<number | null>(null);
   const touchStartPos = useRef<{ x: number; y: number } | null>(null);
   const arenaRef = useRef<HTMLDivElement | null>(null);
 
@@ -201,12 +191,16 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Touch Swipe Gesture Control for Mobile (Zero-Scroll, Calibrated Sensitivity & Continuous Drag)
+  // Touch Swipe Gesture Control for Mobile (Full-Screen Touchpad, Zero-Scroll, Calibrated Sensitivity)
   useEffect(() => {
-    const arena = arenaRef.current;
-    if (!arena) return;
-
     const handleTouchStart = (e: TouchEvent) => {
+      // Don't intercept touches on interactive buttons/links (e.g. Pause, Fullscreen, Mute, Restart)
+      const target = e.target as HTMLElement | null;
+      if (target?.closest('button') || target?.closest('a')) {
+        touchStartPos.current = null;
+        return;
+      }
+
       if (e.touches.length === 1) {
         touchStartPos.current = {
           x: e.touches[0].clientX,
@@ -224,8 +218,8 @@ export default function App() {
       const dy = currentY - touchStartPos.current.y;
       const dist = Math.hypot(dx, dy);
 
-      // Calibrated 16px threshold for instant, responsive swipe
-      if (dist >= 16) {
+      // Calibrated 15px threshold for instant, responsive swipe across entire screen
+      if (dist >= 15) {
         let dir: Direction;
         if (Math.abs(dx) > Math.abs(dy)) {
           dir = dx > 0 ? 'RIGHT' : 'LEFT';
@@ -236,14 +230,6 @@ export default function App() {
         if (engineRef.current) {
           engineRef.current.setNextDirection(dir);
         }
-
-        setSwipeFeedback(dir);
-        if (swipeFeedbackTimer.current) {
-          window.clearTimeout(swipeFeedbackTimer.current);
-        }
-        swipeFeedbackTimer.current = window.setTimeout(() => {
-          setSwipeFeedback(null);
-        }, 220);
 
         // Reset touch start to current pos so continuous dragging turns corners smoothly
         touchStartPos.current = { x: currentX, y: currentY };
@@ -259,19 +245,16 @@ export default function App() {
       touchStartPos.current = null;
     };
 
-    arena.addEventListener('touchstart', handleTouchStart, { passive: true });
-    arena.addEventListener('touchmove', handleTouchMove, { passive: false });
-    arena.addEventListener('touchend', handleTouchEnd, { passive: true });
-    arena.addEventListener('touchcancel', handleTouchEnd, { passive: true });
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
+    window.addEventListener('touchcancel', handleTouchEnd, { passive: true });
 
     return () => {
-      arena.removeEventListener('touchstart', handleTouchStart);
-      arena.removeEventListener('touchmove', handleTouchMove);
-      arena.removeEventListener('touchend', handleTouchEnd);
-      arena.removeEventListener('touchcancel', handleTouchEnd);
-      if (swipeFeedbackTimer.current) {
-        window.clearTimeout(swipeFeedbackTimer.current);
-      }
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('touchcancel', handleTouchEnd);
     };
   }, []);
 
@@ -341,19 +324,6 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => setCrtEffect(!crtEffect)}
-              title="Efecto Pantalla CRT Recreativa"
-              className={`p-1.5 sm:px-2.5 sm:py-1 rounded-md text-xs flex items-center gap-1 border transition-colors ${
-                crtEffect
-                  ? 'bg-blue-600/20 text-blue-300 border-blue-500/40'
-                  : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
-              }`}
-            >
-              <Tv className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">CRT</span>
-            </button>
-
-            <button
               onClick={handleToggleMute}
               title={muted ? 'Activar Sonido' : 'Silenciar'}
               className="p-1.5 sm:px-2.5 sm:py-1 rounded-md text-xs flex items-center gap-1 bg-slate-900 border border-slate-800 hover:border-amber-400 text-slate-300 hover:text-white transition-colors"
@@ -369,19 +339,6 @@ export default function App() {
             >
               {gameState?.status === 'PAUSED' ? <Play className="w-3.5 h-3.5 text-amber-400" /> : <Pause className="w-3.5 h-3.5" />}
               <span className="hidden md:inline">{gameState?.status === 'PAUSED' ? 'Seguir' : 'Pausa'}</span>
-            </button>
-
-            <button
-              onClick={() => setShowGuide(!showGuide)}
-              title="Guía de Toros y Reglas"
-              className={`p-1.5 sm:px-2.5 sm:py-1 rounded-md text-xs flex items-center gap-1 border transition-colors ${
-                showGuide
-                  ? 'bg-amber-400 text-slate-950 border-amber-300 font-bold'
-                  : 'bg-slate-900 text-slate-300 border-slate-800 hover:border-amber-400'
-              }`}
-            >
-              <Info className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Guía</span>
             </button>
           </div>
         </div>
@@ -469,9 +426,7 @@ export default function App() {
                   {/* Viewport Frame with Pure Game Canvas & Touch Swipe Listener */}
                   <div
                     ref={arenaRef}
-                    className={`w-full relative overflow-hidden bg-black rounded flex items-center justify-center select-none touch-none ${
-                      crtEffect ? 'crt-scanlines shadow-red-950/60' : ''
-                    }`}
+                    className="w-full relative overflow-hidden bg-black rounded flex items-center justify-center select-none touch-none"
                     style={{ touchAction: 'none' }}
                   >
                     <canvas
@@ -485,18 +440,6 @@ export default function App() {
                       } block select-none touch-none aspect-[21/25]`}
                       style={{ touchAction: 'none' }}
                     />
-
-                    {/* Sutil Indicador Flotante de Feedback Visual al deslizar (Swipe) */}
-                    {swipeFeedback && (
-                      <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-20 transition-all duration-150">
-                        <div className="bg-slate-950/75 backdrop-blur-xs p-3.5 rounded-full border-2 border-amber-400 shadow-[0_0_30px_rgba(251,191,36,0.6)] animate-pulse">
-                          {swipeFeedback === 'UP' && <ArrowUp className="w-9 h-9 text-amber-300 drop-shadow stroke-[3]" />}
-                          {swipeFeedback === 'DOWN' && <ArrowDown className="w-9 h-9 text-amber-300 drop-shadow stroke-[3]" />}
-                          {swipeFeedback === 'LEFT' && <ArrowLeft className="w-9 h-9 text-amber-300 drop-shadow stroke-[3]" />}
-                          {swipeFeedback === 'RIGHT' && <ArrowRight className="w-9 h-9 text-amber-300 drop-shadow stroke-[3]" />}
-                        </div>
-                      </div>
-                    )}
 
                 {/* Ready Overlay */}
                 {gameState?.status === 'READY' && (
@@ -637,87 +580,7 @@ export default function App() {
             </button>
           </div>
         </div>
-
-        {/* Info Guide */}
-        {showGuide && (
-          <div className="w-full max-w-[560px] mt-3 bg-slate-900/95 border border-red-900/60 rounded-xl p-4 text-xs space-y-3">
-            <div className="flex items-center justify-between">
-              <h4 className="font-bold text-amber-400 flex items-center gap-2 text-sm">
-                <img src={bullImg} alt="Toro" className="w-6 h-6 object-contain" />
-                Los 5 Toros & su IA en el Ruedo
-              </h4>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-[11px]">
-              <div className="p-2 rounded-lg bg-slate-950 border border-red-500/30 flex items-start gap-2">
-                <span className="w-3.5 h-3.5 rounded-full bg-red-600 mt-0.5 shrink-0" />
-                <div>
-                  <strong className="text-red-400">Bravo (Rojo / Blinky):</strong>
-                  <p className="text-slate-400 leading-tight">Persecución implacable directo a tus talones.</p>
-                </div>
-              </div>
-
-              <div className="p-2 rounded-lg bg-slate-950 border border-pink-500/30 flex items-start gap-2">
-                <span className="w-3.5 h-3.5 rounded-full bg-pink-500 mt-0.5 shrink-0" />
-                <div>
-                  <strong className="text-pink-400">Veloz (Rosa / Pinky):</strong>
-                  <p className="text-slate-400 leading-tight">Embosca cortando 4 casillas por delante.</p>
-                </div>
-              </div>
-
-              <div className="p-2 rounded-lg bg-slate-950 border border-cyan-500/30 flex items-start gap-2">
-                <span className="w-3.5 h-3.5 rounded-full bg-cyan-500 mt-0.5 shrink-0" />
-                <div>
-                  <strong className="text-cyan-400">Listo (Cian / Inky):</strong>
-                  <p className="text-slate-400 leading-tight">Flanquea en pinza coordinada con el toro rojo.</p>
-                </div>
-              </div>
-
-              <div className="p-2 rounded-lg bg-slate-950 border border-orange-500/30 flex items-start gap-2">
-                <span className="w-3.5 h-3.5 rounded-full bg-orange-500 mt-0.5 shrink-0" />
-                <div>
-                  <strong className="text-orange-400">Pasmado (Naranja / Clyde):</strong>
-                  <p className="text-slate-400 leading-tight">Se aproxima pero se distrae hacia su rincón.</p>
-                </div>
-              </div>
-
-              <div className="p-2 rounded-lg bg-slate-950 border border-purple-500/30 flex items-start gap-2 sm:col-span-2 lg:col-span-1">
-                <span className="w-3.5 h-3.5 rounded-full bg-purple-500 mt-0.5 shrink-0" />
-                <div>
-                  <strong className="text-purple-400">Morlaco (Morado / Quinto Malo):</strong>
-                  <p className="text-slate-400 leading-tight">Corta tu retirada acechando el cuadrante opuesto.</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-2 border-t border-slate-800 text-slate-300 space-y-1">
-              <p>
-                • <strong>Monedas Amarillas:</strong> Hay 555 monedas de oro distribuidas por todo el laberinto.
-              </p>
-              <p>
-                • <strong>Monedones de Oro (Power Pellets):</strong> Los toros se vuelven azules asustados. ¡Torealos para encadenar <strong>200, 400, 800, 1600 y 3200 pts</strong>!
-              </p>
-              <p>
-                • <strong>Ruedo Monumental Cerrado:</strong> Laberinto sellado con burladeros rojos perimetrales para evitar fugas.
-              </p>
-            </div>
-          </div>
-        )}
       </main>
-
-      {/* CRT Scanline styling */}
-      <style>{`
-        .crt-scanlines::after {
-          content: " ";
-          display: block;
-          position: absolute;
-          top: 0; left: 0; bottom: 0; right: 0;
-          background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-          z-index: 20;
-          background-size: 100% 3px, 6px 100%;
-          pointer-events: none;
-        }
-      `}</style>
     </div>
   );
 }
